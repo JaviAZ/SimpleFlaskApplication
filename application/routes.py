@@ -9,9 +9,11 @@ from application.forms import PostForm, RegistrationForm, LoginForm, UpdateAccou
 def home():
 	postData = Posts.query.all()
 	return render_template('home.html', title='Home', posts=postData)
+
 @app.route('/about')
 def about():
 	return render_template('about.html', title='About')
+
 @app.route('/login', methods=['GET','POST'])
 def login():
 	if current_user.is_authenticated:
@@ -79,21 +81,24 @@ def account():
 		form.email.data = current_user.email
 	return render_template('account.html',title='Account', form=form)
 
-@app.route('/<path:route>')
-def pathroute(route):
-	postData = Posts.query.all()
+@app.route('/post&<int:post_id>', methods=['GET','POST'])
+def pathroute(post_id):
+	post_selected = Posts.query.filter_by(id=str(post_id)).first()
 	form = PostForm()
-	try:
-		if (len(route) > 5):
-			print(route[0:4])
-			if(route[0:4] == 'post'):
-				postid = route[5:len(route)]
-				post_selected = postData[int(postid)-1]
-				form.content.data = post_selected.content
-				return render_template('post.html',title='Post', form=form, post=post_selected)
-		return redirect(url_for('home'))
+	try: 
+		form.title.data = post_selected.title
+		if form.validate_on_submit():
+			print("should be here")
+			post_selected.content=form.content.data
+			db.session.commit()
+			return redirect(url_for('home'))
+		else:
+			form.content.data = post_selected.content
+			return render_template('post.html',title='Post', form=form, post=post_selected)
 	except Exception as e:
+		print(e)
 		return redirect(url_for('home'))
+
 '''@app.route('/<int:val>')
 def introute(val):
 	print(val)

@@ -20,7 +20,7 @@ def login():
 	if form.validate_on_submit():
 		user = Users.query.filter_by(email=form.email.data).first()
 		if user and bcrypt.check_password_hash(user.password, form.password.data):
-			login_user(user, remember=form.remember.data)	
+			login_user(user, remember=form.remember.data)
 			next_page = request.args.get('next')
 			if next_page:
 				return redirect(next_page)
@@ -46,7 +46,7 @@ def register():
 		db.session.commit()
 		return redirect(url_for('post'))
 	return render_template('register.html', title='Register', form=form)
-	
+
 @app.route('/post', methods=['GET','POST'])
 @login_required
 def post():
@@ -79,21 +79,22 @@ def account():
 		form.email.data = current_user.email
 	return render_template('account.html',title='Account', form=form)
 
-@app.route('/<path:route>')
-def pathroute(route):
-	postData = Posts.query.all()
-	form = PostForm()
-	try:
-		if (len(route) > 5):
-			print(route[0:4])
-			if(route[0:4] == 'post'):
-				postid = route[5:len(route)]
-				post_selected = postData[int(postid)-1]
-				form.content.data = post_selected.content
-				return render_template('post.html',title='Post', form=form, post=post_selected)
-		return redirect(url_for('home'))
-	except Exception as e:
-		return redirect(url_for('home'))
+@app.route('/post&<int:post_id>', methods=['GET','POST'])
+def pathroute(post_id):
+    post_selected = Posts.query.filter_by(id=str(post_id)).first()
+    form = PostForm()
+    try:
+        form.title.data = post_selected.title
+        if form.validate_on_submit():
+            post_selected.content=form.content.data
+            db.session.commit()
+            return redirect(url_for('home'))
+        else:
+            form.content.data = post_selected.content
+            return render_template('post.html',title='Post', form=form, post=post_selected)
+    except Exception as e:
+        print(e)
+        return redirect(url_for('home'))
 '''@app.route('/<int:val>')
 def introute(val):
 	print(val)
